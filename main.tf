@@ -24,3 +24,25 @@ resource "docker_container" "nginx" {
     external = var.external_port
   }
 }
+
+resource "null_resource" "nginx_test" {
+  depends_on = [docker_container.nginx]
+
+  provisioner "local-exec" {
+    command = <<-EOT
+      echo "Attente du démarrage de Nginx..."
+      sleep 3
+      echo "Test de l'URL http://localhost:${var.external_port}"
+      if curl -s http://localhost:${var.external_port} | grep -q "Welcome"; then
+        echo "✅ Test réussi : Nginx répond correctement avec la page Welcome"
+      else
+        echo "❌ Test échoué : Nginx ne répond pas correctement"
+        exit 1
+      fi
+    EOT
+  }
+
+  triggers = {
+    container_id = docker_container.nginx.id
+  }
+}
