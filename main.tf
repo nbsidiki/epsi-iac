@@ -11,8 +11,17 @@ provider "docker" {
   host = "unix://${pathexpand("~/.docker/run/docker.sock")}"
 }
 
+resource "docker_network" "app_network" {
+  name = "nginx-network"
+}
+
 resource "docker_image" "nginx" {
   name         = var.docker_image_name
+  keep_locally = true
+}
+
+resource "docker_image" "curl" {
+  name         = "appropriate/curl:latest"
   keep_locally = true
 }
 
@@ -23,6 +32,25 @@ resource "docker_container" "nginx" {
     internal = var.internal_port
     external = var.external_port
   }
+  networks_advanced {
+    name = docker_network.app_network.name
+  }
+}
+
+resource "docker_container" "client" {
+  name       = "client"
+  image      = docker_image.curl.image_id
+  command = [
+    "sh",
+    "-c",
+    "curl http://${var.container_name}:${var.internal_port} && echo '\n✅ Communication réussie avec nginx' && sleep 3000"
+  ]
+  stdin_open = true
+  tty        = true
+  networks_advanced {
+    name = docker_network.app_network.name
+  }
+  depends_on = [docker_container.nginx]
 }
 
 resource "null_resource" "nginx_test" {
