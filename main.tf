@@ -12,15 +12,15 @@ provider "docker" {
 }
 
 resource "docker_image" "nginx" {
-  name         = "nginx:latest"
+  name         = var.docker_image_name
   keep_locally = true
 }
 
 resource "docker_container" "nginx" {
-  name  = "nginx-terraform"
+  name  = var.container_name
   image = docker_image.nginx.image_id
   ports {
-    internal = 80
-    external = 8080
+    internal = var.internal_port
+    external = var.external_port
   }
 }
