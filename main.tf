@@ -33,20 +33,20 @@ resource "docker_container" "nginx" {
     external = var.external_port
   }
   networks_advanced {
-    name = docker_network.app_network.name
+    name    = docker_network.app_network.name
+    aliases = ["nginx"]
   }
 }
 
 resource "docker_container" "client" {
-  name       = "client"
+  count      = var.client_count
+  name       = "client-${count.index}"
   image      = docker_image.curl.image_id
   command = [
     "sh",
     "-c",
-    "curl http://${var.container_name}:${var.internal_port} && echo '\n✅ Communication réussie avec nginx' && sleep 3000"
+    "curl http://nginx && sleep 30"
   ]
-  stdin_open = true
-  tty        = true
   networks_advanced {
     name = docker_network.app_network.name
   }
