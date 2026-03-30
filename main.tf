@@ -39,8 +39,8 @@ resource "docker_container" "nginx" {
 }
 
 resource "docker_container" "client" {
-  count      = var.client_count
-  name       = "client-${count.index}"
+  for_each   = toset(var.server_names)
+  name       = "server-${each.value}"
   image      = docker_image.curl.image_id
   command = [
     "sh",
